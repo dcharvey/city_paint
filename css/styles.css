@@ -1,0 +1,7 @@
+#menu-container {
+  pointer-events: none;
+}
+
+#menu {
+  pointer-events: auto;
+}
