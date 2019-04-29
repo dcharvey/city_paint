@@ -10,7 +10,7 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2(-10, -10);
 var mode = 'density'
 var brushSize = 200;
-var brushIntensity = 10;
+var brushIntensity = 25;
 var brushFeathering = 1;
 var brushPercCoverage = 50;
 var selectedUse = 'residential'
@@ -140,7 +140,7 @@ var dir = new THREE.Vector3( 0, 10, 0 );
 var length = 1;
 var hex = 0xffff00;
 
-var yellow2blue = chroma.scale(['#fde0dd', '#fa9fb5', '#c51b8a']).domain([0,100]);
+var yellow2blue = chroma.scale(['#feebe2', '#fbb4b9', '#f768a1' ,'#c51b8a', '#7a0177']).domain([0,100]);
 var useColors = {'residential':'#fff400', 'office':'#df5343', 'retail':'#f99653', 'park':'#69f953'}
 
 //normalize the direction vector (convert to vector of length 1)
@@ -221,7 +221,8 @@ function paintDensity () {
 
   group.traverse( function ( child ) {
     var distance = intersectsPlane[0].point.distanceTo( child.position );
-    if (distance <= brushSize && child.name.includes('pixel')) {
+    if (distance <= brushSize && child.name.includes('pixel_')) {
+      console.log(child)
 
       var brushAdd = brushIntensity * ((brushSize - distance) / brushSize) / brushFeathering
       if (brushAdd >= brushIntensity) {
@@ -237,7 +238,17 @@ function paintDensity () {
       if (child.userData.add < brushAdd) {
         child.userData.add = brushAdd;
       }
-      child.userData.density = child.userData.starting + child.userData.add
+
+      var densityAdd = child.userData.starting + child.userData.add
+
+      if (densityAdd > 100) {
+        child.userData.density = 100
+      } else if (densityAdd < 5) {
+        child.userData.density = 5
+      } else {
+        child.userData.density = child.userData.starting + child.userData.add
+      }
+
       child.children[0].scale.set(1, 1, child.userData.density)
       child.material.color.set(yellow2blue(child.userData.density).hex() );
     }
@@ -320,16 +331,16 @@ document.addEventListener('keydown', (event) => {
   const keyName = event.key;
 
   if (keyName === '[') {
-    brush.scale.set( brush.scale.x - 5, brush.scale.y - 5, brush.scale.z - 5)
-    brushSize -= 10
+    brush.scale.set( brush.scale.x - 20, brush.scale.y - 20, brush.scale.z - 20)
+    brushSize -= 20
     brushSizeSlider.data("ionRangeSlider").update({
       from: brushSize,
     });
   }
 
   if (keyName === ']') {
-    brush.scale.set( brush.scale.x + 5, brush.scale.y + 5, brush.scale.z + 5)
-    brushSize += 10
+    brush.scale.set( brush.scale.x + 20, brush.scale.y + 20, brush.scale.z + 20)
+    brushSize += 20
     brushSizeSlider.data("ionRangeSlider").update({
       from: brushSize,
     });
@@ -378,6 +389,7 @@ brushSizeSlider.ionRangeSlider({
   min: 5,
   max: 1000,
   from: 500,
+  postfix: ' meters',
   hide_min_max: true,
   onChange: function (data) {
     brush.scale.set( data.from, data.from, data.from)
@@ -387,10 +399,11 @@ brushSizeSlider.ionRangeSlider({
 
 brushIntensitySlider = $("#brushIntensity")
 brushIntensitySlider.ionRangeSlider({
-  min: 1,
-  max: 20,
+  min: -50,
+  max: 50,
   from: brushIntensity,
-  step: 1,
+  step: 5,
+  postfix: ' FAR',
   hide_min_max: true,
   onChange: function (data) {
     brushIntensity = data.from
