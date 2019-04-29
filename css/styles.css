@@ -1,3 +1,7 @@
+body {
+  font-family: "DejaVu Sans Mono", monospace;
+}
+
 #menu-container {
   pointer-events: none;
 }

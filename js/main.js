@@ -9,7 +9,7 @@ var plane;
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2(-10, -10);
 var mode = 'density'
-var brushSize = 50;
+var brushSize = 200;
 var brushIntensity = 10;
 var brushFeathering = 1;
 var brushPercCoverage = 50;
@@ -33,22 +33,22 @@ function init() {
 
   var directionalLight1 = new THREE.DirectionalLight( 0xfff1f1, .7);
   directionalLight1.name = "directionalLight1";
-  directionalLight1.position.set( -1000, 600, 1000 );
+  directionalLight1.position.set( -2000, 1200, 2000 );
   directionalLight1.castShadow = true;
   scene.add( directionalLight1 );
 
-  directionalLight1.shadow.camera.right =  1000;
-  directionalLight1.shadow.camera.left = -1000;
-  directionalLight1.shadow.camera.top=  1000;
-  directionalLight1.shadow.camera.bottom = -1000;
-  directionalLight1.shadow.camera.near = 600;
-  directionalLight1.shadow.camera.far = 3000;
+  directionalLight1.shadow.camera.right =  2000;
+  directionalLight1.shadow.camera.left = -2000;
+  directionalLight1.shadow.camera.top=  2000;
+  directionalLight1.shadow.camera.bottom = -2000;
+  directionalLight1.shadow.camera.near = 0;
+  directionalLight1.shadow.camera.far = 10000;
 
   var axesHelper = new THREE.AxesHelper( 100 );
   scene.add( axesHelper );
 
   var shadowCameraHelper = new THREE.CameraHelper(directionalLight1.shadow.camera);
-  shadowCameraHelper.visible = true;
+  shadowCameraHelper.visible = false;
   shadowCameraHelper.name = "directionalLight1Helper"
   scene.add( shadowCameraHelper );
 
@@ -83,7 +83,7 @@ function init() {
 
   // set up camera and controls
   camera = new THREE.PerspectiveCamera( 45, (window.innerWidth) / window.innerHeight, 20, 15000 );
-  camera.position.set( -200, 300, 200 );
+  camera.position.set( -1000, 1500, 1000 );
 
   controls = new THREE.OrbitControls( camera, renderer.domElement );
   controls.target.set( 0, 0, 0 );
@@ -140,7 +140,7 @@ var dir = new THREE.Vector3( 0, 10, 0 );
 var length = 1;
 var hex = 0xffff00;
 
-var yellow2blue = chroma.scale(['#fde0dd', '#fa9fb5', '#c51b8a']).domain([0,60]);
+var yellow2blue = chroma.scale(['#fde0dd', '#fa9fb5', '#c51b8a']).domain([0,100]);
 var useColors = {'residential':'#fff400', 'office':'#df5343', 'retail':'#f99653', 'park':'#69f953'}
 
 //normalize the direction vector (convert to vector of length 1)
@@ -149,11 +149,15 @@ dir.normalize();
 var group = new THREE.Group();
 group.name = 'pixelMap'
 
-for (var i=0; i<30; i++) {
-  for (var j=0; j<30; j++) {
+var pixelSize = 100;
+var pixelsX = 20, pixelsZ = 20;
+
+
+for (var i=0; i<pixelsX; i++) {
+  for (var j=0; j<pixelsZ; j++) {
 
     // add the pixel
-    var geometry = new THREE.PlaneGeometry( 10, 10 );
+    var geometry = new THREE.PlaneGeometry( pixelSize, pixelSize );
 
     var material = new THREE.MeshStandardMaterial( {color: 0x000000, roughness: 1, metalness: .5, side: 0} );
     material.wireframe = false;
@@ -163,12 +167,12 @@ for (var i=0; i<30; i++) {
     plane.castShadow = true;
     plane.receiveShadow = true;
     plane.rotation.x = - Math.PI / 2;
-    plane.position.set(i * 10 - 145, 0 , j * 10 - 145)
+    plane.position.set(i * pixelSize + (pixelSize / 2) - ((pixelsX * pixelSize) / 2), 0 , j * pixelSize + (pixelSize / 2) - ((pixelsZ * pixelSize) / 2))
     plane.userData = { 'density':i + j, 'use':useTypes[Math.floor(Math.random() * 4)], 'paint':0};
     plane.material.color.set( yellow2blue(plane.userData.density).hex() );
 
     // add the building as a child of the pixel
-    var geometry = new THREE.BoxGeometry(6, 6 ,1)
+    var geometry = new THREE.BoxGeometry(60, 60 ,4)
     geometry.translate(0, 0, .5)
 
     var matWhite = new THREE.MeshStandardMaterial( {color: 0xffffff, roughness: 1, metalness: .5, side: 0} );
@@ -179,7 +183,7 @@ for (var i=0; i<30; i++) {
     box.name = 'building' + i + j
     box.castShadow = true;
     box.receiveShadow = true;
-    box.scale.set(1, 1, plane.userData.density/10)
+    box.scale.set(1, 1, plane.userData.density)
     if (plane.userData.use == 'park') {
       box.visible = false;
     }
@@ -234,7 +238,7 @@ function paintDensity () {
         child.userData.add = brushAdd;
       }
       child.userData.density = child.userData.starting + child.userData.add
-      child.children[0].scale.set(1, 1, child.userData.density/10)
+      child.children[0].scale.set(1, 1, child.userData.density)
       child.material.color.set(yellow2blue(child.userData.density).hex() );
     }
   });
@@ -317,7 +321,7 @@ document.addEventListener('keydown', (event) => {
 
   if (keyName === '[') {
     brush.scale.set( brush.scale.x - 5, brush.scale.y - 5, brush.scale.z - 5)
-    brushSize -= 5
+    brushSize -= 10
     brushSizeSlider.data("ionRangeSlider").update({
       from: brushSize,
     });
@@ -325,7 +329,7 @@ document.addEventListener('keydown', (event) => {
 
   if (keyName === ']') {
     brush.scale.set( brush.scale.x + 5, brush.scale.y + 5, brush.scale.z + 5)
-    brushSize += 5
+    brushSize += 10
     brushSizeSlider.data("ionRangeSlider").update({
       from: brushSize,
     });
@@ -372,8 +376,8 @@ window.requestAnimationFrame(render);
 brushSizeSlider = $("#brushSize")
 brushSizeSlider.ionRangeSlider({
   min: 5,
-  max: 100,
-  from: 50,
+  max: 1000,
+  from: 500,
   hide_min_max: true,
   onChange: function (data) {
     brush.scale.set( data.from, data.from, data.from)
