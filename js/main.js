@@ -48,7 +48,7 @@ function init() {
   scene.add( axesHelper );
 
   var shadowCameraHelper = new THREE.CameraHelper(directionalLight1.shadow.camera);
-  shadowCameraHelper.visible = false;
+  shadowCameraHelper.visible = true;
   shadowCameraHelper.name = "directionalLight1Helper"
   scene.add( shadowCameraHelper );
 
@@ -151,23 +151,51 @@ group.name = 'pixelMap'
 
 for (var i=0; i<30; i++) {
   for (var j=0; j<30; j++) {
+
+    // add the pixel
     var geometry = new THREE.PlaneGeometry( 10, 10 );
-    var material = new THREE.MeshBasicMaterial( {color: 0x000000, side: 2} );
+
+    var material = new THREE.MeshStandardMaterial( {color: 0x000000, roughness: 1, metalness: .5, side: 0} );
     material.wireframe = false;
+
     var plane = new THREE.Mesh( geometry, material );
+    plane.name = 'pixel_' + i + j;
+    plane.castShadow = true;
+    plane.receiveShadow = true;
     plane.rotation.x = - Math.PI / 2;
     plane.position.set(i * 10 - 145, 0 , j * 10 - 145)
     plane.userData = { 'density':i + j, 'use':useTypes[Math.floor(Math.random() * 4)], 'paint':0};
     plane.material.color.set( yellow2blue(plane.userData.density).hex() );
+
+    // add the building as a child of the pixel
+    var geometry = new THREE.BoxGeometry(6, 6 ,1)
+    geometry.translate(0, 0, .5)
+
+    var matWhite = new THREE.MeshStandardMaterial( {color: 0xffffff, roughness: 1, metalness: .5, side: 0} );
+    matWhite.transparent = true;
+    matWhite.opacity = 1;
+
+    var box = new THREE.Mesh( geometry, matWhite )
+    box.name = 'building' + i + j
+    box.castShadow = true;
+    box.receiveShadow = true;
+    box.scale.set(1, 1, plane.userData.density/10)
+    if (plane.userData.use == 'park') {
+      box.visible = false;
+    }
+
+    plane.add(box);
+
     group.add( plane );
   }
 }
 
 scene.add( group );
-  radius = 1,
-  segments = 64,
-  material = new THREE.LineBasicMaterial( { color: 0x007bff } ),
-  geometry = new THREE.CircleGeometry( 1, segments );
+console.log(group)
+
+var segments = 64;
+var material = new THREE.LineBasicMaterial( { color: 0x007bff } );
+var geometry = new THREE.CircleGeometry( 1, segments );
 
 // Remove center vertex
 geometry.vertices.shift();
@@ -189,7 +217,7 @@ function paintDensity () {
 
   group.traverse( function ( child ) {
     var distance = intersectsPlane[0].point.distanceTo( child.position );
-    if (distance <= brushSize && child instanceof THREE.Mesh) {
+    if (distance <= brushSize && child.name.includes('pixel')) {
 
       var brushAdd = brushIntensity * ((brushSize - distance) / brushSize) / brushFeathering
       if (brushAdd >= brushIntensity) {
@@ -206,6 +234,7 @@ function paintDensity () {
         child.userData.add = brushAdd;
       }
       child.userData.density = child.userData.starting + child.userData.add
+      child.children[0].scale.set(1, 1, child.userData.density/10)
       child.material.color.set(yellow2blue(child.userData.density).hex() );
     }
   });
@@ -217,9 +246,14 @@ function paintUse () {
 
   group.traverse( function ( child ) {
     var distance = intersectsPlane[0].point.distanceTo( child.position );
-    if (distance <= brushSize && child instanceof THREE.Mesh) {
+    if (distance <= brushSize && child.name.includes('pixel')) {
       child.userData.use = selectedUse
       child.material.color.set(useColors[child.userData.use]);
+      if (selectedUse == 'park') {
+        child.children[0].visible = false;
+      } else {
+        child.children[0].visible = true;
+      }
     }
   });
 
@@ -267,10 +301,12 @@ function onMouseMove( event ) {
 }
 
 var geometry = new THREE.PlaneGeometry( 10000, 10000 );
+
 var material = new THREE.MeshBasicMaterial( {color: 0x00ff00, side: THREE.SingleSide} );
 material.wireframe = false;
 material.transparent = true;
 material.opacity = 0;
+
 var plane = new THREE.Mesh( geometry, material );
 plane.name = "basePlane"
 plane.rotation.x = - Math.PI / 2;
@@ -298,6 +334,8 @@ document.addEventListener('keydown', (event) => {
 
 function densityMode () {
   mode = 'density'
+  $('#densityButton').addClass('active')
+  $('#useButton').removeClass('active')
   group.traverse( function ( child ) {
     if (child instanceof THREE.Mesh) {
       child.material.color.set(yellow2blue(child.userData.density).hex() );
@@ -307,6 +345,8 @@ function densityMode () {
 
 function useMode() {
   mode = 'use'
+  $('#useButton').addClass('active')
+  $('#densityButton').removeClass('active')
   group.traverse( function ( child ) {
     if (child instanceof THREE.Mesh) {
       child.material.color.set(useColors[child.userData.use]);

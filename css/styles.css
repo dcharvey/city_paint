@@ -5,3 +5,7 @@
 #menu {
   pointer-events: auto;
 }
+
+.dropdown-menu {
+  background-color: #1a2050;
+}
