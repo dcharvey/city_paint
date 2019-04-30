@@ -13,7 +13,7 @@ var brushSize = 200;
 var brushIntensity = 25;
 var brushFeathering = 1;
 var brushPercCoverage = 50;
-var selectedUse = 'residential'
+var selectedUse = 'park'
 var useTypes = ['residential','office','retail','park']
 var mouseDown = false;
 
@@ -170,7 +170,7 @@ for (var i=0; i<pixelsX; i++) {
     plane.receiveShadow = true;
     plane.rotation.x = - Math.PI / 2;
     plane.position.set(i * pixelSize + (pixelSize / 2) - ((pixelsX * pixelSize) / 2), 0 , j * pixelSize + (pixelSize / 2) - ((pixelsZ * pixelSize) / 2))
-    plane.userData = { 'density':i + j, 'use':useTypes[Math.floor(Math.random() * 4)], 'paint':0};
+    plane.userData = { 'density':i + j + 1, 'use':useTypes[Math.floor(Math.random() * 4)], 'paint':0};
     plane.material.color.set( yellow2blue(plane.userData.density).hex() );
 
     // add the building as a child of the pixel
@@ -353,7 +353,7 @@ function densityMode () {
   $('#densityButton').addClass('active')
   $('#useButton').removeClass('active')
   group.traverse( function ( child ) {
-    if (child instanceof THREE.Mesh) {
+    if (child.name.includes('pixel_')) {
       child.material.color.set(yellow2blue(child.userData.density).hex() );
     }
   });
@@ -364,7 +364,7 @@ function useMode() {
   $('#useButton').addClass('active')
   $('#densityButton').removeClass('active')
   group.traverse( function ( child ) {
-    if (child instanceof THREE.Mesh) {
+    if (child.name.includes('pixel_')) {
       child.material.color.set(useColors[child.userData.use]);
     };
   });
