@@ -1,3 +1,9 @@
+/**
+ * City Paint
+ * @author Dee Harvey
+ * @license (c) Dee Harvey all rights reserved
+ */
+
 // threejs
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
