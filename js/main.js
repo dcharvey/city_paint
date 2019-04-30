@@ -45,6 +45,8 @@ function init() {
   directionalLight1.shadow.camera.far = 10000;
 
   var axesHelper = new THREE.AxesHelper( 100 );
+  axesHelper.name = 'axesHelper'
+  axesHelper.visible = false;
   scene.add( axesHelper );
 
   var shadowCameraHelper = new THREE.CameraHelper(directionalLight1.shadow.camera);
@@ -222,7 +224,6 @@ function paintDensity () {
   group.traverse( function ( child ) {
     var distance = intersectsPlane[0].point.distanceTo( child.position );
     if (distance <= brushSize && child.name.includes('pixel_')) {
-      console.log(child)
 
       var brushAdd = brushIntensity * ((brushSize - distance) / brushSize) / brushFeathering
       if (brushAdd >= brushIntensity) {
@@ -261,7 +262,7 @@ function paintUse () {
 
   group.traverse( function ( child ) {
     var distance = intersectsPlane[0].point.distanceTo( child.position );
-    if (distance <= brushSize && child.name.includes('pixel')) {
+    if (distance <= brushSize && child.name.includes('pixel_')) {
       child.userData.use = selectedUse
       child.material.color.set(useColors[child.userData.use]);
       if (selectedUse == 'park') {
@@ -473,7 +474,7 @@ function addGui () {
   var scn = gui.addFolder('Scene');
   scn.addColor( params, 'backgroundColor' )
     .onChange( function() { scene.background.set( params.backgroundColor ); } );
-
+  scn.add( scene.getObjectByName( 'axesHelper' ), 'visible');
   scn.open();
 
   var cntrls = gui.addFolder('Controls');
